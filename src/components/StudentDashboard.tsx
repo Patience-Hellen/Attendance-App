@@ -114,6 +114,12 @@ export default function StudentDashboard() {
                       ? `${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}` 
                       : 'Acquiring GPS coordinates...'}
                   </p>
+                  {currentLocation && (
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider">GPS Active & Verified</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <button

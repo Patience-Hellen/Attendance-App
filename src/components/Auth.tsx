@@ -26,13 +26,17 @@ export default function Auth() {
     setError('');
     
     try {
-      const defaultName = role === 'student' ? 'Demo Student' : 'Demo Lecturer';
-      const safeEmailPrefix = email ? email.split('@')[0] : 'demo';
-      const displayName = name || (role === 'student' ? (regNo || defaultName) : safeEmailPrefix);
+      const displayName = name || (role === 'student' ? (regNo || 'Demo Student') : (email.split('@')[0] || 'Demo Lecturer'));
       const safeRegNo = role === 'student' ? (regNo || 'SCM211-0000/2022') : undefined;
 
-      // Permissive: try to sign in as guest
-      await signInAsGuest(role, displayName, safeRegNo);
+      if (mode === 'login' || mode === 'signup') {
+        // Permissive: try to sign in as guest to ensure they get in
+        await signInAsGuest(role, displayName, safeRegNo);
+      } else if (mode === 'forgot') {
+        await resetPassword(email || 'demo@jkuat.ac.ke');
+        setSuccess('Reset instructions sent (Demo mode)');
+        setTimeout(() => setSuccess(''), 5000);
+      }
     } catch (err: any) {
       console.error(err);
       setError('Login failed. Please verify browser permissions or check if anonymous auth is enabled.');
@@ -102,6 +106,19 @@ export default function Auth() {
 
           {/* Simple Form */}
           <form onSubmit={handleAuth} className="space-y-6">
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Hellen Patience"
+                  className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                />
+              </div>
+            )}
+
             {role === 'student' ? (
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Registration Number</label>
@@ -163,6 +180,13 @@ export default function Auth() {
               <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-[11px] font-bold border border-red-100 flex items-center gap-3">
                 <AlertCircle size={16} />
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-50 text-green-600 rounded-2xl text-[11px] font-bold border border-green-100 flex items-center gap-3">
+                <CheckCircle2 size={16} />
+                {success}
               </div>
             )}
 
