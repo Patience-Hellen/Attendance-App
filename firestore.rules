@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt']) &&
+               data.keys().size() >= 5 && data.keys().size() <= 6 &&
+               data.uid == request.auth.uid &&
+               data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+               data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+               data.role in ['student', 'lecturer'] &&
+               data.createdAt == request.time;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && isOwner(userId); // Prevent mass scraping
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'reg_no']) &&
+                      incoming().uid == existing().uid &&
+                      incoming().role == existing().role;
+    }
+
+    // --- Sessions Collection ---
+    match /sessions/{sessionId} {
+      function isValidSession(data) {
+        return data.keys().hasAll(['courseCode', 'lecturerId', 'lecturerName', 'location', 'radius', 'isActive', 'startTime']) &&
+               data.courseCode is string && data.courseCode.size() < 20 &&
+               data.lecturerId == request.auth.uid &&
+               data.radius is number && data.radius >= 5 && data.radius <= 500 &&
+               data.isActive is bool &&
+               data.location.latitude is number && data.location.longitude is number;
+      }
+
+      function isSessionLecturer() {
+        return isSignedIn() && existing().lecturerId == request.auth.uid;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Students need to see active sessions
+      
+      allow create: if isSignedIn() && getUserData(request.auth.uid).role == 'lecturer' && isValidSession(incoming());
+      
+      allow update: if isSessionLecturer() && (
+        // Action: End Session
+        (incoming().diff(existing()).affectedKeys().hasOnly(['isActive', 'endTime']) && incoming().isActive == false) ||
+        // Action: Update Location/Radius (only if active)
+        (existing().isActive == true && incoming().diff(existing()).affectedKeys().hasAny(['location', 'radius']))
+      );
+
+      // --- Attendance Sub-collection ---
+      match /attendance/{attendanceId} {
+        function isValidAttendance(data) {
+          return data.keys().hasAll(['sessionId', 'studentId', 'studentName', 'timestamp', 'status', 'location']) &&
+                 data.sessionId == sessionId &&
+                 data.studentId == request.auth.uid &&
+                 data.status == 'Present' &&
+                 data.timestamp == request.time &&
+                 data.location.latitude is number && data.location.longitude is number;
+        }
+
+        allow read: if isSessionLecturer() || isOwner(resource.data.studentId);
+        allow create: if isSignedIn() && 
+                         getUserData(request.auth.uid).role == 'student' && 
+                         get(/databases/$(database)/documents/sessions/$(sessionId)).data.isActive == true &&
+                         isValidAttendance(incoming());
+        
+        // Attendance records are generally immutable for students
+        allow update, delete: if false;
+      }
+    }
+
+    // --- Collection Group Rule for History ---
+    match /{path=**}/attendance/{attendanceId} {
+      allow read: if isSignedIn() && resource.data.studentId == request.auth.uid;
+    }
+  }
+}

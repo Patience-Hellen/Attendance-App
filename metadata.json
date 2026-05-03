@@ -1,0 +1,12 @@
+{
+  "name": "JKUAT Attendance Record",
+  "description": "A real-time geofenced attendance system for JKUAT students and lecturers.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "Firebase Authentication",
+    "Cloud Firestore",
+    "Real-time Geolocation"
+  ]
+}

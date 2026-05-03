@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "lecturer"] },
+        "reg_no": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Session": {
+      "title": "Attendance Session",
+      "description": "A class session created by a lecturer",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "courseCode": { "type": "string" },
+        "lecturerId": { "type": "string" },
+        "lecturerName": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        },
+        "radius": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" }
+      },
+      "required": ["courseCode", "lecturerId", "location", "radius", "isActive"]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "A record of a student attending a session",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "regNo": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        }
+      },
+      "required": ["sessionId", "studentId", "timestamp", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/sessions/{sessionId}": {
+      "schema": "Session",
+      "description": "Class sessions"
+    },
+    "/sessions/{sessionId}/attendance/{attendanceId}": {
+      "schema": "AttendanceRecord",
+      "description": "Attendance records for a specific session"
+    }
+  }
+}
