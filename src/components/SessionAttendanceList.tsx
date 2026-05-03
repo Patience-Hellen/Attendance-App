@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useAttendance } from '../hooks/useAttendance';
-import { User, Clock, CheckCircle2 } from 'lucide-react';
+import { User, CheckCircle2 } from 'lucide-react';
 
 export default function SessionAttendanceList({ sessionId }: { sessionId: string }) {
   const { sessionAttendance, listenToSessionAttendance } = useAttendance();
@@ -11,38 +12,120 @@ export default function SessionAttendanceList({ sessionId }: { sessionId: string
   }, [sessionId]);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="bg-gray-50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Attendance List</span>
-        <span className="text-xs font-bold text-indigo-600">{sessionAttendance.length} Present</span>
-      </div>
-      <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>ATTENDANCE LIST</Text>
+        <Text style={styles.countText}>{sessionAttendance.length} Present</Text>
+      </View>
+      
+      <View style={styles.list}>
         {sessionAttendance.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-sm">
-            Waiting for students to join...
-          </div>
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Waiting for students to join...</Text>
+          </View>
         ) : (
           sessionAttendance.map((record) => (
-            <div key={record.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
-                  <User size={16} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">{record.studentName}</p>
-                  <p className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{record.regNo}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-400 font-medium">
+            <View key={record.id} style={styles.item}>
+              <View style={styles.left}>
+                <View style={styles.iconCircle}>
+                  <User size={16} color="#4f46e5" />
+                </View>
+                <View>
+                  <Text style={styles.name}>{record.studentName}</Text>
+                  <Text style={styles.reg}>{record.regNo}</Text>
+                </View>
+              </View>
+              <View style={styles.right}>
+                <Text style={styles.time}>
                   {record.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <CheckCircle2 size={16} className="text-green-500" />
-              </div>
-            </div>
+                </Text>
+                <CheckCircle2 size={16} color="#16a34a" />
+              </View>
+            </View>
           ))
         )}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f9fafb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  headerText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#9ca3af',
+  },
+  countText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#4f46e5',
+  },
+  list: {
+    maxHeight: 300,
+  },
+  empty: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#9ca3af',
+    fontSize: 12,
+  },
+  item: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9fafb',
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f5f3ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  name: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  reg: {
+    fontSize: 9,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  time: {
+    fontSize: 10,
+    color: '#9ca3af',
+    fontWeight: '500',
+  }
+});

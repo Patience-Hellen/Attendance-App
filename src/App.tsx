@@ -1,26 +1,29 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
+import React from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StatusBar,
+  ScrollView,
+  ActivityIndicator
+} from 'react-native';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Auth from './components/Auth';
 import LecturerDashboard from './components/LecturerDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import { LogOut, GraduationCap, MapPin } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 
 function AppContent() {
   const { user, profile, loading, signOut } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading JKUAT Geofence...</p>
-        </div>
-      </div>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+        <Text style={styles.loadingText}>Loading JKUAT Geofence...</Text>
+      </View>
     );
   }
 
@@ -29,64 +32,52 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-lg text-white">
-              <GraduationCap size={24} />
-            </div>
-            <div>
-              <h1 className="font-bold text-gray-900 leading-tight">JKUAT Attendance</h1>
-              <div className="flex items-center gap-1 text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
-                <MapPin size={10} className="text-indigo-500" />
-                Geofenced System
-              </div>
-            </div>
-          </div>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.brand}>
+            <View style={styles.brandIcon}>
+              <GraduationCap size={20} color="#fff" />
+            </View>
+            <View>
+              <Text style={styles.brandTitle}>JKUAT Attendance</Text>
+              <View style={styles.geofenceBadge}>
+                <MapPin size={10} color="#4f46e5" />
+                <Text style={styles.geofenceText}>GEOFENCED SYSTEM</Text>
+              </View>
+            </View>
+          </View>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">{profile.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{profile.role}</p>
-            </div>
-            <button
-              onClick={signOut}
-              className="px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-red-100"
-              title="Sign Out"
-            >
-              <LogOut size={20} />
-              <span className="text-sm font-bold hidden md:block">Logout</span>
-            </button>
-          </div>
-        </div>
-      </header>
+          <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
+            <LogOut size={20} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={profile.role}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {profile.role === 'lecturer' ? (
-              <LecturerDashboard />
-            ) : (
-              <StudentDashboard />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+      <ScrollView contentContainerStyle={styles.main}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{profile.name}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>{profile.role.toUpperCase()}</Text>
+            </View>
+          </View>
+
+          {profile.role === 'lecturer' ? (
+            <LecturerDashboard />
+          ) : (
+            <StudentDashboard />
+          )}
+      </ScrollView>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-gray-400 text-sm">
-        <p>© 2026 JKUAT Geofence Attendance System</p>
-      </footer>
-    </div>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>© 2026 JKUAT Geofence Attendance</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -97,3 +88,104 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  header: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    paddingVertical: 12,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'between',
+    paddingHorizontal: 20,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  brandIcon: {
+    backgroundColor: '#002B5B',
+    padding: 8,
+    borderRadius: 10,
+  },
+  brandTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  geofenceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  geofenceText: {
+    fontSize: 8,
+    color: '#4f46e5',
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#f9fafb',
+  },
+  main: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'between',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  roleBadge: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  roleText: {
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: '900',
+  },
+  footer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#9ca3af',
+  }
+});

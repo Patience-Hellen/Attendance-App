@@ -1,27 +1,47 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  Image, 
+  ScrollView, 
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 import { useAuth } from '../hooks/useAuth';
-import { GraduationCap, UserCircle, Briefcase, Mail, Lock, Eye, EyeOff, LayoutGrid, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import {
+  GraduationCap,
+  UserCircle,
+  Briefcase,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2
+} from 'lucide-react';
 
-const JKUAT_LOGO = "https://www.jkuat.ac.ke/images/logo.png"; // Official JKUAT logo
+const JKUAT_LOGO = "https://www.jkuat.ac.ke/images/logo.png";
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
 export default function Auth() {
-  const { signInWithGoogle, signInWithEmail, signInAsGuest, signUpWithEmail, resetPassword } = useAuth();
+  const { signInAsGuest, resetPassword } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [role, setRole] = useState<'student' | 'lecturer'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('John Dose');
+  const [name, setName] = useState('John Doe');
   const [regNo, setRegNo] = useState('SCM211-0000/2022');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async () => {
     setLoading(true);
     setError('');
     
@@ -30,7 +50,6 @@ export default function Auth() {
       const safeRegNo = role === 'student' ? (regNo || 'SCM211-0000/2022') : undefined;
 
       if (mode === 'login' || mode === 'signup') {
-        // Permissive: try to sign in as guest to ensure they get in
         await signInAsGuest(role, displayName, safeRegNo);
       } else if (mode === 'forgot') {
         await resetPassword(email || 'demo@jkuat.ac.ke');
@@ -39,192 +58,391 @@ export default function Auth() {
       }
     } catch (err: any) {
       console.error(err);
-      setError('Login failed. Please verify browser permissions or check if anonymous auth is enabled.');
+      setError('Login failed. Please check your connection.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] p-4 font-sans selection:bg-indigo-100">
-      <div className="max-w-md w-full">
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Logo/Branding */}
-        <div className="text-center mb-10">
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <img src={JKUAT_LOGO} alt="JKUAT Logo" className="h-24 w-auto object-contain drop-shadow-sm" />
-            <div className="bg-[#002B5B] px-3 py-1 rounded-full text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-blue-100">
-              JKUAT University
-            </div>
-            <h1 className="text-3xl font-extrabold text-[#1a202c] tracking-tight">Attendance Record</h1>
-          </motion.div>
-        </div>
+        <View style={styles.header}>
+          <Image source={{ uri: JKUAT_LOGO }} style={styles.logo} resizeMode="contain" />
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>JKUAT UNIVERSITY</Text>
+          </View>
+          <Text style={styles.title}>Attendance Record</Text>
+        </View>
 
-        <motion.div 
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="bg-white rounded-[2rem] shadow-2xl shadow-gray-200/50 p-8 border border-white"
-        >
-          {/* Form Header */}
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Login</h2>
-            <p className="text-sm text-gray-500 font-medium mt-1">
-              Enter details or just click login to proceed
-            </p>
-          </div>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{mode === 'login' ? 'Login' : mode === 'signup' ? 'Sign Up' : 'Reset Password'}</Text>
+            <Text style={styles.cardSubtitle}>Enter details or just click login to proceed</Text>
+          </View>
 
           {/* Role Switcher */}
-          <div className="flex p-1 bg-gray-100 rounded-xl mb-6">
-            <button
-              type="button"
-              onClick={() => setRole('student')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-bold transition-all ${
-                role === 'student' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+          <View style={styles.roleSwitcher}>
+            <TouchableOpacity 
+              onPress={() => setRole('student')}
+              style={[styles.roleButton, role === 'student' && styles.roleButtonActive]}
             >
-              <UserCircle size={16} />
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('lecturer')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-xs font-bold transition-all ${
-                role === 'lecturer' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              <UserCircle size={16} color={role === 'student' ? '#4f46e5' : '#6b7280'} />
+              <Text style={[styles.roleButtonText, role === 'student' && styles.roleButtonTextActive]}>Student</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => setRole('lecturer')}
+              style={[styles.roleButton, role === 'lecturer' && styles.roleButtonActive]}
             >
-              <Briefcase size={16} />
-              Lecturer
-            </button>
-          </div>
+              <Briefcase size={16} color={role === 'lecturer' ? '#4f46e5' : '#6b7280'} />
+              <Text style={[styles.roleButtonText, role === 'lecturer' && styles.roleButtonTextActive]}>Lecturer</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Simple Form */}
-          <form onSubmit={handleAuth} className="space-y-6">
+          {/* Form */}
+          <View style={styles.form}>
             {mode === 'signup' && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>FULL NAME</Text>
+                <TextInput
                   placeholder="Hellen Patience"
-                  className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                  value={name}
+                  onChangeText={setName}
+                  style={styles.input}
                 />
-              </div>
+              </View>
             )}
 
             {role === 'student' ? (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Registration Number</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                    <GraduationCap size={18} />
-                  </div>
-                  <input
-                    type="text"
-                    value={regNo}
-                    onChange={(e) => setRegNo(e.target.value)}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>REGISTRATION NUMBER</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputIcon}>
+                    <GraduationCap size={18} color="#9ca3af" />
+                  </View>
+                  <TextInput
                     placeholder="SCMXXX-XXXX/20XX"
-                    className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium uppercase"
+                    value={regNo}
+                    onChangeText={setRegNo}
+                    autoCapitalize="characters"
+                    style={[styles.input, { paddingLeft: 45 }]}
                   />
-                </div>
-              </div>
+                </View>
+              </View>
             ) : (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                    <Mail size={18} />
-                  </div>
-                  <input
-                    type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>EMAIL ADDRESS</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputIcon}>
+                    <Mail size={18} color="#9ca3af" />
+                  </View>
+                  <TextInput
                     placeholder="name@jkuat.ac.ke"
-                    className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={[styles.input, { paddingLeft: 45 }]}
                   />
-                </div>
-              </div>
+                </View>
+              </View>
             )}
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                  <Lock size={18} />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>PASSWORD</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.inputIcon}>
+                  <Lock size={18} color="#9ca3af" />
+                </View>
+                <TextInput
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-12 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  style={[styles.input, { paddingLeft: 45, paddingRight: 45 }]}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
+                  {showPassword ? <EyeOff size={18} color="#9ca3af" /> : <Eye size={18} color="#9ca3af" />}
+                </TouchableOpacity>
+              </View>
+            </View>
 
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-[11px] font-bold border border-red-100 flex items-center gap-3">
-                <AlertCircle size={16} />
-                {error}
-              </div>
-            )}
+            {error ? (
+              <View style={styles.errorBox}>
+                <AlertCircle size={16} color="#dc2626" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-            {success && (
-              <div className="p-4 bg-green-50 text-green-600 rounded-2xl text-[11px] font-bold border border-green-100 flex items-center gap-3">
-                <CheckCircle2 size={16} />
-                {success}
-              </div>
-            )}
+            {success ? (
+              <View style={styles.successBox}>
+                <CheckCircle2 size={16} color="#16a34a" />
+                <Text style={styles.successText}>{success}</Text>
+              </View>
+            ) : null}
 
-            <button
-              type="submit"
+            <TouchableOpacity 
+              onPress={handleAuth} 
               disabled={loading}
-              className="w-full bg-[#002B5B] hover:bg-[#001f42] text-white font-bold py-5 rounded-2xl shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group text-lg"
+              style={styles.submitButton}
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <ActivityIndicator color="#fff" />
               ) : (
-                mode === 'login' ? 'Login' : mode === 'signup' ? 'Create Account' : 'Reset Password'
+                <Text style={styles.submitButtonText}>
+                  {mode === 'login' ? 'Login' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+                </Text>
               )}
-            </button>
-          </form>
+            </TouchableOpacity>
+          </View>
 
-          {/* Footer Action */}
-          <div className="mt-8 text-center space-y-4">
-            <div className="flex items-center justify-center gap-4 text-sm font-medium text-gray-500">
-              {mode === 'login' ? (
-                <>
-                  <button onClick={() => setMode('signup')} className="text-indigo-600 hover:underline">Sign Up</button>
-                  <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                  <button onClick={() => setMode('forgot')} className="text-indigo-600 hover:underline">Forgot Password?</button>
-                </>
-              ) : (
-                <button onClick={() => setMode('login')} className="text-indigo-600 hover:underline">Back to Login</button>
-              )}
-            </div>
-          </div>
-        </motion.div>
+          {/* Footer */}
+          <View style={styles.footer}>
+            {mode === 'login' ? (
+              <View style={styles.footerLinks}>
+                <TouchableOpacity onPress={() => setMode('signup')}>
+                  <Text style={styles.linkText}>Sign Up</Text>
+                </TouchableOpacity>
+                <View style={styles.dot} />
+                <TouchableOpacity onPress={() => setMode('forgot')}>
+                  <Text style={styles.linkText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={() => setMode('login')}>
+                <Text style={styles.linkText}>Back to Login</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
-        <p className="mt-8 text-center text-xs text-gray-400 font-medium px-4">
+        <Text style={styles.disclaimer}>
           Accessing this portal requires authorization from JKUAT ICT department.
-        </p>
-      </div>
-    </div>
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-// Removed duplicate imports from bottom
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f2f5',
+  },
+  scrollContent: {
+    padding: 20,
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    height: 80,
+    width: 200,
+    marginBottom: 15,
+  },
+  badge: {
+    backgroundColor: '#002B5B',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a202c',
+    letterSpacing: -0.5,
+  },
+  card: {
+    backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 30,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  roleSwitcher: {
+    flexDirection: 'row',
+    backgroundColor: '#f3f4f6',
+    padding: 4,
+    borderRadius: 15,
+    marginBottom: 25,
+  },
+  roleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  roleButtonActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  roleButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#6b7280',
+  },
+  roleButtonTextActive: {
+    color: '#4f46e5',
+  },
+  form: {
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#9ca3af',
+    letterSpacing: 1.5,
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 15,
+    zIndex: 10,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    zIndex: 10,
+  },
+  input: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    borderRadius: 18,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1f2937',
+  },
+  submitButton: {
+    backgroundColor: '#002B5B',
+    paddingVertical: 18,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#002B5B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#f0fdf4',
+    padding: 12,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#dcfce7',
+  },
+  successText: {
+    color: '#16a34a',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  footer: {
+    marginTop: 25,
+    alignItems: 'center',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  linkText: {
+    color: '#4f46e5',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    backgroundColor: '#d1d5db',
+    borderRadius: 2,
+  },
+  disclaimer: {
+    marginTop: 30,
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#9ca3af',
+    fontWeight: '500',
+    paddingHorizontal: 20,
+    lineHeight: 18,
+  }
+});
